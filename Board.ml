@@ -1,4 +1,4 @@
-
+ 
 type 'a t = Group of ('a t) list * Grid.Piece.t * int | Solo of 'a
 
 let ft_power x y =
@@ -19,10 +19,11 @@ let rec print_bottom depth = match depth with
 	| _ -> print_string "________" ; print_bottom (depth-1) 
 
 
-let rec print_board lst i = match lst with
-	| [] -> ()
-	| hd::tl -> print_line hd; print_endline ""; if i = 2 && tl != []then begin print_bottom (List.length hd); print_board tl (0) end else print_board tl (i+1)
-
+let rec print_board lst =
+	let rec loop lst i = match lst with
+		| [] -> ()
+		| hd::tl -> print_line hd; print_endline ""; if i = 2 && tl != []then begin print_bottom (List.length hd); loop tl (0) end else loop tl (i+1)
+	in loop lst 0
 
 let rec new_board depth = match depth with
 	| 0 -> let grid = Grid.newGrid () in Solo grid
@@ -44,10 +45,10 @@ let add_to mainlst elems start =
 
 let merge_lst mainlst newlst depth i = match i with
 	| 1 -> newlst
-	| i when i = 4 || i = 7 -> mainlst @ newlst 
-	| i when i = 2 || i = 3 -> add_to mainlst newlst 0 
+	| i when i = 4 || i = 7 -> mainlst @ newlst
+	| i when i = 2 || i = 3 -> add_to mainlst newlst 0
 	| i when i = 5 || i = 6 -> add_to mainlst newlst (ft_power 3 depth)
-	| _ -> add_to mainlst newlst ((ft_power 3 depth) * 2)		
+	| _ -> add_to mainlst newlst ((ft_power 3 depth) * 2)
 
 (* add generation of winer for depth n *)
 let rec get_list_str board = match board with
@@ -58,12 +59,26 @@ let rec get_list_str board = match board with
 													in gen_lgrid listg 1 []
 								in newListStirng
 
-let add_move y x board = ()
+let in_range (y, x) depth = ()
 
-(* match board with 
-	| Solo grid -> print_endline "Solo of depth : 0";
-	| Group (_, _, depth) -> print_string "Group of depth : "; print_int depth; print_endline "" *)
+
+(* test if  winner *)
+let rec add_move y_x depth piece board = match board, y_x with
+	| Solo (grid), (y, x) -> Solo (Grid.dropPiece y x piece grid)
+	| Group (listg, _, _), (y,x) -> board
+	(* let rec loop_group = i board *)
 
 let test_board () = 
-	let board = new_board 1 in 
-	print_board ( get_list_str board ) 0
+	let depth = 1 in 
+	let board = new_board depth in
+	print_board ( get_list_str board ); print_endline "-------------------------------------------------\n";
+	let move = add_move (2,1) depth Grid.Piece.X board in print_board ( get_list_str move ); print_endline ""
+
+
+
+
+
+
+
+
+

@@ -17,7 +17,6 @@ let newGrid () = {
               [Piece.E; Piece.E; Piece.E]];
 
     winner 	= Piece.E;
-
   }
 
 let piece_to_str p =
@@ -33,7 +32,8 @@ let plist_to_lstring plst =
   | _ -> ["Error"]
 
 let toStringList t = (List.map plist_to_lstring t.pieces)
-            
+
+
 let rec isWinnerLine pieces =
   match pieces with
   | [] -> Piece.E
@@ -75,6 +75,7 @@ let rec isWinnerDiag pieces =
      in scan_diag lst1 lst2 lst3
   |_ -> Piece.E
 
+
 let isWinner pieces =
   if (isWinnerLine pieces) <> Piece.E ||
        (isWinnerColumn pieces) <> Piece.E ||
@@ -88,24 +89,19 @@ let getWinner pieces =
   else if (isWinnerDiag pieces) <> Piece.E then (isWinnerDiag pieces)
   else Piece.E
 
-let dropPiece x y piece t =
-  if x < 0 || x > 2 || y < 0 || y > 2 then raise ( invalid_arg "Please respect 0<=x<=2, 0<=y<=2" )
-  else let rec alter_piece x lst =
-         match x, lst with
-         | _, [] -> []
-         | 0, head::tail ->
-            if head == Piece.E then
-              piece::(alter_piece (x - 1) tail)
-            else
-              ( invalid_arg "Please respect 0<=x<=2, 0<=y<=2" )
-         | _, head::tail -> head::(alter_piece (x - 1) tail) in
-       let rec alter_line x y lst =
-         match y, lst with
-         | _, [] -> []
-         | 0, head::tail -> (alter_piece x head)::(alter_line x (y - 1) tail)
-         | _, head::tail -> head::(alter_line x (y - 1) tail)
-       in let new_grid = alter_line x y t.pieces in
-          { pieces = new_grid; winner = (getWinner new_grid) }
+let change_column_at column x (piece: Piece.t ) = 
+  let rec loop_column icolumn column new_column = match column, icolumn with
+      | [], _ -> new_column
+      | hd::tl, icolumn when icolumn = x -> loop_column (icolumn+1) tl (new_column @ [piece])
+      | hd::tl, _ -> loop_column (icolumn+1) tl (new_column @ [hd])
+  in loop_column 1 column []
+
+let dropPiece y x (piece: Piece.t ) t = 
+ let rec loop_row iline grid newgrid = match grid, iline with
+    | [], _                        -> let newt = { pieces = newgrid; winner = (getWinner newgrid) } in newt
+    | hd::tl, iline when iline = y -> let new_column = (change_column_at hd x piece )in loop_row (iline+1) tl (newgrid @ [new_column])
+    | hd::tl, _                    -> loop_row (iline+1) tl (newgrid @ [hd])
+  in loop_row 1 t.pieces []
 
 let test_grid_setup () =
   let test_grid_empty = [
