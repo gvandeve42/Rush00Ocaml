@@ -6,62 +6,108 @@ module Piece =
 
   end
 
-type t = Piece.t list list
+type t = {
+    pieces 	: Piece.t list list;
+    winner 	: Piece.t;
+  }
 
+let newGrid () = {
+    pieces 	= [[Piece.E; Piece.E; Piece.E];
+              [Piece.E; Piece.E; Piece.E];
+              [Piece.E; Piece.E; Piece.E]];
 
-let newGrid = [
-    [Piece.E; Piece.E; Piece.E];
-    [Piece.E; Piece.E; Piece.E];
-    [Piece.E; Piece.E; Piece.E]
-  ]
+    winner 	= Piece.E;
 
-let rec isWinnerLine t =
-  match t with
-  | [] -> false
-  | [Piece.X; Piece.X; Piece.X]::tail -> true
-  | [Piece.O; Piece.O; Piece.O]::tail -> true
+  }
+
+let piece_to_str p =
+  match p with
+  | Piece.O -> "O"
+  | Piece.X -> "X"
+  | Piece.E -> "-"
+
+let plist_to_lstring plst =
+  match plst with
+  | p1::p2::p3::en ->
+     [" "^ (piece_to_str p1) ^" "^ (piece_to_str p2) ^" "^ (piece_to_str p3)]
+  | _ -> ["Error"]
+
+let toStringList t = (List.map plist_to_lstring t.pieces)
+            
+let rec isWinnerLine pieces =
+  match pieces with
+  | [] -> Piece.E
+  | [Piece.X; Piece.X; Piece.X]::tail -> Piece.X
+  | [Piece.O; Piece.O; Piece.O]::tail -> Piece.O
   | head::tail -> isWinnerLine tail
 
-let rec isWinnerColumn t =
-  match t with
+let rec isWinnerColumn pieces =
+  match pieces with
   | lst1::lst2::lst3::[] ->
      let rec scan_column lst1 lst2 lst3 =
        match lst1, lst2, lst3 with
-       |[], [], [] -> false
-       |Piece.X::n1, Piece.X::n2, Piece.X::n3 -> true
-       |Piece.O::n1, Piece.O::n2, Piece.O::n3 -> true
+       |[], [], [] -> Piece.E
+       |Piece.X::n1, Piece.X::n2, Piece.X::n3 -> Piece.X
+       |Piece.O::n1, Piece.O::n2, Piece.O::n3 -> Piece.O
        |_::tail1, _::tail2, _::tail3 -> scan_column tail1 tail2 tail3
-       |_, _, _ -> false
+       |_, _, _ -> Piece.E
      in scan_column lst1 lst2 lst3
-  |_ -> false
+  |_ -> Piece.E
 
-let rec isWinnerDiag t =
-  match t with
+let rec isWinnerDiag pieces =
+  match pieces with
   | lst1::lst2::lst3::[] ->
      let rec scan_diag lst1 lst2 lst3 =
        match lst1, lst2, lst3 with
        |Piece.X::_::_::[],
         _::Piece.X::_::[],
-        _::_::Piece.X::[] -> true
+        _::_::Piece.X::[] -> Piece.X
        |Piece.O::_::_::[],
         _::Piece.O::_::[],
-        _::_::Piece.O::[] -> true
+        _::_::Piece.O::[] -> Piece.O
        |_::_::Piece.X::[],
         _::Piece.X::_::[],
-        Piece.X::_::_::[] -> true
+        Piece.X::_::_::[] -> Piece.X
        |_::_::Piece.O::[],
         _::Piece.O::_::[],
-        Piece.O::_::_::[] -> true
-       |_ -> false
+        Piece.O::_::_::[] -> Piece.O
+       |_ -> Piece.E
      in scan_diag lst1 lst2 lst3
-  |_ -> false
+  |_ -> Piece.E
 
-let isWinner t =
-  if isWinnerLine t || isWinnerColumn t || isWinnerDiag t
+let isWinner pieces =
+  if (isWinnerLine pieces) <> Piece.E ||
+       (isWinnerColumn pieces) <> Piece.E ||
+         (isWinnerDiag pieces) <> Piece.E
   then true
   else false
 
-let test_grid_setup =
+let getWinner pieces =
+  if (isWinnerLine pieces) <> Piece.E then (isWinnerLine pieces)
+  else if (isWinnerColumn pieces) <> Piece.E then (isWinnerColumn pieces)
+  else if (isWinnerDiag pieces) <> Piece.E then (isWinnerDiag pieces)
+  else Piece.E
+
+let dropPiece x y piece t =
+  if x < 0 || x > 2 || y < 0 || y > 2 then raise ( invalid_arg "Please respect 0<=x<=2, 0<=y<=2" )
+  else let rec alter_piece x lst =
+         match x, lst with
+         | _, [] -> []
+         | 0, head::tail ->
+            if head == Piece.E then
+              piece::(alter_piece (x - 1) tail)
+            else
+              ( invalid_arg "Please respect 0<=x<=2, 0<=y<=2" )
+         | _, head::tail -> head::(alter_piece (x - 1) tail) in
+       let rec alter_line x y lst =
+         match y, lst with
+         | _, [] -> []
+         | 0, head::tail -> (alter_piece x head)::(alter_line x (y - 1) tail)
+         | _, head::tail -> head::(alter_line x (y - 1) tail)
+       in let new_grid = alter_line x y t.pieces in
+          { pieces = new_grid; winner = (getWinner new_grid) }
+
+let test_grid_setup () =
   let test_grid_empty = [
       [Piece.E; Piece.E; Piece.E];
       [Piece.E; Piece.E; Piece.E];
