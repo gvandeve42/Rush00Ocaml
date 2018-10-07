@@ -53,6 +53,19 @@ let rec isWinnerColumn pieces =
      in scan_column lst1 lst2 lst3
   |_ -> Piece.E
 
+let spaceline line =
+    let rec loop line = match line with
+      | []      -> false
+      | hd::tl  -> if hd = Piece.E then true else loop tl 
+    in loop line
+
+
+let space grid =
+  let rec loop grid = match grid with
+      | []      -> false
+      | hd::tl  -> if (spaceline hd) = true then true else loop tl
+    in loop grid.pieces
+
 let rec isWinnerDiag pieces =
   match pieces with
   | lst1::lst2::lst3::[] ->
@@ -73,7 +86,6 @@ let rec isWinnerDiag pieces =
        |_ -> Piece.E
      in scan_diag lst1 lst2 lst3
   |_ -> Piece.E
-
 
 let isWinner pieces =
   if (isWinnerLine pieces) <> Piece.E ||
@@ -103,61 +115,3 @@ let dropPiece y x (piece: Piece.t ) t =  if t.winner <> Piece.E then (t, false) 
     | hd::tl, iline when iline = y -> let (new_column, v) = (change_column_at hd x piece) in loop_row (iline+1) tl (newgrid @ [new_column]) v
     | hd::tl, _                    -> loop_row (iline+1) tl (newgrid @ [hd]) valid
   in loop_row 1 t.pieces [] true
-
-let test_grid_setup () =
-  let test_grid_empty = [
-      [Piece.E; Piece.E; Piece.E];
-      [Piece.E; Piece.E; Piece.E];
-      [Piece.E; Piece.E; Piece.E]
-    ] in
-
-  let test_grid_no_winner = [
-      [Piece.X; Piece.E; Piece.X];
-      [Piece.E; Piece.E; Piece.E];
-      [Piece.E; Piece.X; Piece.E]
-    ] in
-
-  let test_grid_1st_line = [
-      [Piece.X; Piece.X; Piece.X];
-      [Piece.E; Piece.E; Piece.E];
-      [Piece.E; Piece.E; Piece.E]
-    ] in
-
-  let test_grid_3rd_line = [
-      [Piece.E; Piece.E; Piece.E];
-      [Piece.E; Piece.E; Piece.E];
-      [Piece.O; Piece.O; Piece.O]
-    ] in
-
-  let test_grid_1st_column = [
-      [Piece.O; Piece.E; Piece.E];
-      [Piece.O; Piece.E; Piece.E];
-      [Piece.O; Piece.E; Piece.E]
-    ] in
-
-  let test_grid_2nd_column = [
-      [Piece.E; Piece.X; Piece.E];
-      [Piece.E; Piece.X; Piece.E];
-      [Piece.E; Piece.X; Piece.E]
-    ] in
-
-  let test_grid_1st_diag = [
-      [Piece.X; Piece.E; Piece.E];
-      [Piece.E; Piece.X; Piece.E];
-      [Piece.E; Piece.E; Piece.X]
-    ] in
-
-  let test_grid_2nd_diag = [
-      [Piece.E; Piece.E; Piece.O];
-      [Piece.E; Piece.O; Piece.E];
-      [Piece.O; Piece.E; Piece.E]
-    ] in
-
-  if isWinner test_grid_empty == true then print_endline "true" else print_endline "false";
-  if isWinner test_grid_no_winner == true then print_endline "true" else print_endline "false";
-  if isWinner test_grid_1st_line == true then print_endline "true" else print_endline "false";
-  if isWinner test_grid_3rd_line == true then print_endline "true" else print_endline "false";
-  if isWinner test_grid_1st_column == true then print_endline "true" else print_endline "false";
-  if isWinner test_grid_2nd_column == true then print_endline "true" else print_endline "false";
-  if isWinner test_grid_1st_diag == true then print_endline "true" else print_endline "false";
-  if isWinner test_grid_2nd_diag == true then print_endline "true" else print_endline "false";
